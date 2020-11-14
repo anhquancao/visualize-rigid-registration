@@ -2,10 +2,7 @@ import matplotlib.pyplot  as plt
 import numpy as np
 
 def plot_precision_recall_curves(stats, method_names, rte_precisions, rre_precisions,
-                                 output_postfix, cmap,
-                                 our_method_names,
-                                 our_method_ts, our_methods_recall_ts,
-                                 our_method_rs, our_methods_recall_rs):
+                                 output_postfix, cmap):
     '''
     \input stats: (num_methods, num_pairs, 5)
     \input method_names:  (num_methods) string, shown as xticks
@@ -22,7 +19,11 @@ def plot_precision_recall_curves(stats, method_names, rte_precisions, rre_precis
         pairwise_stats = analyze_by_pair(stats, rte_thresh=rte_thresh, rre_thresh=np.inf)
         rte_precision_curves[:, i] = pairwise_stats[:, 0]
 
-    fig = plt.figure(figsize=(15, 5))
+    fig = plt.figure(figsize=(8, 3.3))
+    # ax1 = fig.add_subplot(1, 2, 1, aspect=3.0 / np.max(rte_precisions))
+    # ax2 = fig.add_subplot(1, 2, 2, aspect=3.0 / np.max(rre_precisions))
+    plt.rcParams.update({'font.size': 12})
+
     ax1 = fig.add_subplot(1, 2, 1, aspect=3.0 / np.max(rte_precisions))
     ax2 = fig.add_subplot(1, 2, 2, aspect=3.0 / np.max(rre_precisions))
 
@@ -30,12 +31,12 @@ def plot_precision_recall_curves(stats, method_names, rte_precisions, rre_precis
         alpha = rre_precision_curves[m].mean()
         alpha = 1.0 if alpha > 0 else 0.0
 
-        ax1.plot(rre_precisions, rre_precision_curves[m], color=cmap[m], alpha=alpha)
-        ax2.plot(rte_precisions, rte_precision_curves[m], color=cmap[m], alpha=alpha)
+        ax1.plot(rre_precisions, rre_precision_curves[m], color=cmap[m], alpha=alpha, linewidth=1.5)
+        ax2.plot(rte_precisions, rte_precision_curves[m], color=cmap[m], alpha=alpha, linewidth=1.5)
 
-    for m, name in enumerate(our_method_names):
-        ax1.plot(our_method_rs[m], our_methods_recall_rs[m], color=cmap[m + len(method_names)])
-        ax2.plot(our_method_ts[m], our_methods_recall_ts[m], color=cmap[m + len(method_names)])
+    # for m, name in enumerate(our_method_names):
+    #     ax1.plot(our_method_rs[m], our_methods_recall_rs[m], color=cmap[m + len(method_names)])
+    #     ax2.plot(our_method_ts[m], our_methods_recall_ts[m], color=cmap[m + len(method_names)])
 
     ax1.set_ylabel('Recall')
     ax1.set_xlabel('Rotation (deg)')
@@ -43,11 +44,13 @@ def plot_precision_recall_curves(stats, method_names, rte_precisions, rre_precis
 
     ax2.set_xlabel('Translation (m)')
     ax2.set_ylim((0.0, 1.0))
-    ax2.legend(method_names + our_method_names, loc='center left', bbox_to_anchor=(1, 0.5))
+    ax2.legend(method_names, loc='center left', bbox_to_anchor=(1, 0.5))
     ax1.grid()
     ax2.grid()
 
+    fig.suptitle("KITTI", y=0.93)
     plt.tight_layout()
+    plt.subplots_adjust(wspace=0)
     plt.savefig('{}_{}.png'.format('precision_recall', output_postfix))
 
     plt.close(fig)
