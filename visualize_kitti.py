@@ -32,9 +32,11 @@ for name, path in our_methods_data:
 
     # print(stats.shape)
     # print(g['results'].mean(0, keepdims=True).shape)
-    stats = np.concatenate((stats, g['results'].reshape(10, 555, 5).mean(0, keepdims=True)), axis=0)
+    # print(g['results'].reshape(-1, 555, 5).mean(1).mean(0))
+    stats = np.concatenate((stats, g['results'].reshape(-1, 555, 5).mean(0, keepdims=True)), axis=0)
 
     # stats = np.concatenate((stats, g['results'][1, 1, :, :][np.newaxis, ]), axis=0)
+
 
 
 cmap = plt.get_cmap('tab20b')

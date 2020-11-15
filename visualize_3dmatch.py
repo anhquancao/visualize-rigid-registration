@@ -13,7 +13,7 @@ stats = stats[selected_method_ids]
 DGR_rerun_names = [
     # ('DGR', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz'),
     ('DGR w/o safeguard', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard.npz'),
-    ('DGR w/o safeguard, w/o optim', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard_optim.npz')
+    (r"DGR$^\dagger$", 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard_optim.npz')
 ]
 for name, path in DGR_rerun_names:
     method_names.append(name)
@@ -22,35 +22,26 @@ for name, path in DGR_rerun_names:
 
 # Our method
 our_methods_data = [
-    ('Ours', 'data/ours_recall_curves_kitti/recall_curves_kitti_no_icp.npz'),
-    ('Ours + ICP', 'data/ours_recall_curves_kitti/recall_curves_kitti_icp.npz'),
+    ('Ours', 'data/recall_curves_3dmatch_no_icp_threshold/results.npy'),
 ]
 
-our_method_rs, our_method_ts = [], []
-our_method_recall_rs, our_method_recall_ts = [], []
-our_method_names = []
-
 for name, path in our_methods_data:
-    our_method_names.append(name)
+    method_names.append(name)
     g = np.load(path)
 
-    our_method_ts.append(g['t_list'])
-    our_method_recall_ts.append(g['recall_vs_t'].mean(1))
-
-    our_method_rs.append(g['r_list'])
-    our_method_recall_rs.append(g['recall_vs_r'].mean(1))
+    # print(stats.shape)
+    # print(g.shape)
+    # print(g['results'].reshape(-1, 555, 5).mean(1).mean(0))
+    stats = np.concatenate((stats, g.reshape(-1, 1623, 5).mean(0, keepdims=True)), axis=0)
 
 
 
 cmap = plt.get_cmap('tab20b')
-colors = [cmap(i) for i in np.linspace(0, 1, len(method_names) + len(our_method_names))]
+colors = [cmap(i) for i in np.linspace(0, 1, len(method_names))]
 colors.reverse()
 plot_precision_recall_curves(stats,
                              method_names,
                              rre_precisions=np.arange(0, 15, 0.05),
                              rte_precisions=np.arange(0, 0.3, 0.005),
                              output_postfix='3dmatch',
-                             cmap=colors,
-                             our_method_names=our_method_names,
-                             our_method_rs=our_method_rs, our_method_ts=our_method_ts,
-                             our_methods_recall_rs=our_method_recall_rs, our_methods_recall_ts=our_method_recall_ts)
+                             cmap=colors, figsize=(9, 3.3), aspect=4.0)

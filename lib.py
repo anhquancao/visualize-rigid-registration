@@ -2,7 +2,7 @@ import matplotlib.pyplot  as plt
 import numpy as np
 
 def plot_precision_recall_curves(stats, method_names, rte_precisions, rre_precisions,
-                                 output_postfix, cmap):
+                                 output_postfix, cmap, figsize=(8, 3.3), aspect=3.0):
     '''
     \input stats: (num_methods, num_pairs, 5)
     \input method_names:  (num_methods) string, shown as xticks
@@ -19,13 +19,13 @@ def plot_precision_recall_curves(stats, method_names, rte_precisions, rre_precis
         pairwise_stats = analyze_by_pair(stats, rte_thresh=rte_thresh, rre_thresh=np.inf)
         rte_precision_curves[:, i] = pairwise_stats[:, 0]
 
-    fig = plt.figure(figsize=(8, 3.3))
+    fig = plt.figure(figsize=figsize)
     # ax1 = fig.add_subplot(1, 2, 1, aspect=3.0 / np.max(rte_precisions))
     # ax2 = fig.add_subplot(1, 2, 2, aspect=3.0 / np.max(rre_precisions))
     plt.rcParams.update({'font.size': 12})
 
-    ax1 = fig.add_subplot(1, 2, 1, aspect=3.0 / np.max(rte_precisions))
-    ax2 = fig.add_subplot(1, 2, 2, aspect=3.0 / np.max(rre_precisions))
+    ax1 = fig.add_subplot(1, 2, 1, aspect=aspect / np.max(rte_precisions))
+    ax2 = fig.add_subplot(1, 2, 2, aspect=aspect / np.max(rre_precisions))
 
     for m, name in enumerate(method_names):
         alpha = rre_precision_curves[m].mean()
