@@ -11,7 +11,7 @@ stats = stats[selected_method_ids]
 
 # DGR
 DGR_rerun_names = [
-    # ('DGR', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz'),
+    ('DGR', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz'),
     ('DGR w/o safeguard', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard.npz'),
     (r"DGR$^\dagger$", 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard_optim.npz')
 ]
@@ -22,17 +22,15 @@ for name, path in DGR_rerun_names:
 
 # Our method
 our_methods_data = [
-    ('Ours', 'data/recall_curves_3dmatch_no_icp_threshold/results.npy'),
+    # ('Ours', 'data/recall_curves_3dmatch_no_icp_245_None_3/results.npy'),
+    ('Ours', 'data/recall_curves_3dmatch_no_icp_245_None_5.npz'),
 ]
 
 for name, path in our_methods_data:
     method_names.append(name)
     g = np.load(path)
-
-    # print(stats.shape)
-    # print(g.shape)
-    # print(g['results'].reshape(-1, 555, 5).mean(1).mean(0))
-    stats = np.concatenate((stats, g.reshape(-1, 1623, 5).mean(0, keepdims=True)), axis=0)
+    # print(list(g.keys()))
+    stats = np.concatenate((stats, g['results'].reshape(-1, 1623, 5).mean(0, keepdims=True)), axis=0)
 
 
 
@@ -44,4 +42,4 @@ plot_precision_recall_curves(stats,
                              rre_precisions=np.arange(0, 15, 0.05),
                              rte_precisions=np.arange(0, 0.3, 0.005),
                              output_postfix='3dmatch',
-                             cmap=colors, figsize=(9, 3.3), aspect=4.0)
+                             cmap=colors, figsize=(9, 3.3), aspect=4.2, title="3DMatch")
