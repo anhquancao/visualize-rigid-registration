@@ -25,6 +25,8 @@ def extract_data(path):
 
     R_est = np.squeeze(scan['Rest'])
     T_est = np.squeeze(scan['Test'], 0)
+    R_true = np.squeeze(scan['Rtrue'])
+    T_true = np.squeeze(scan['Ttrue'], 0)
 
     return {
         'src_orig': src_orig,
@@ -35,28 +37,42 @@ def extract_data(path):
         'tgt_quant': tgt_quant,
         'Rest': R_est,
         'Test': T_est,
-        'Rtrue': scan['Rtrue'],
-        'Ttrue': scan['Ttrue'],
+        'Rtrue': R_true,
+        'Ttrue': T_true,
         'w_src': scan['w_src'],
+        'ind_corres_pts_for_src': scan['ind_corres_pts_for_src'],
         'corres_pts_for_src': scan['corres_pts_for_src'],
-        'log_attn_row': scan['log_attn_row']
+        # 'log_attn_row': scan['log_attn_row']
     }
 
 
+def filter_ground(pts, thres=-1.5):
+    return np.squeeze(pts)
+    pts = np.squeeze(pts)
+    return pts[pts[:, 2] > thres, :]
+
+def filter_weights_ground(pts, weights, thres=-1.5):
+    pts = np.squeeze(pts)
+    weights = np.squeeze(weights)
+    return weights[pts[:, 2] > thres]
+
 def draw_scans(src, tgt, image_name, save_dir, point_size=3, view=False):
+    # print(src.shape, tgt.shape)
+    src = filter_ground(src)
+    tgt = filter_ground(tgt)
     pcd1 = o3d.geometry.PointCloud()
     pcd1.points = o3d.utility.Vector3dVector(src)
-    pcd1.estimate_normals()
+    # pcd1.estimate_normals()
     # pcd1.paint_uniform_color(np.array([50 / 255, 205 / 255, 50 / 255]).reshape(3, 1))  # green
     # pcd1.paint_uniform_color(np.array([230 / 255, 20 / 255, 50 / 255]).reshape(3, 1))  # red
-    pcd1.paint_uniform_color(np.array([255 / 255, 255 / 255, 30 / 255]).reshape(3, 1))  # yellow
+    pcd1.paint_uniform_color(np.array([210 / 255, 60 / 255, 60 / 255]).reshape(3, 1))  # yellow
 
     pcd2 = o3d.geometry.PointCloud()
     pcd2.points = o3d.utility.Vector3dVector(tgt)
-    pcd2.estimate_normals()
+    # pcd2.estimate_normals()
 
     # pcd2.paint_uniform_color(np.array([0 / 255, 0 / 255, 205 / 255]).reshape(3, 1))  # blue
-    pcd2.paint_uniform_color(np.array([135 / 255, 206 / 255, 255 / 255]).reshape(3, 1))  # lightblue
+    pcd2.paint_uniform_color(np.array([61 / 255, 133 / 255, 198 / 255]).reshape(3, 1))  # lightblue
     # vis = o3d.visualization.draw_geometries([pcd1, pcd2])
     # vis.capture_screen_image('test.png', True)
 
@@ -88,22 +104,54 @@ def draw_scans(src, tgt, image_name, save_dir, point_size=3, view=False):
     vis.destroy_window()
 
 
-def draw_mask(src, weights, image_name, save_dir, point_size=3):
-    pcd1 = o3d.geometry.PointCloud()
-    pcd1.points = o3d.utility.Vector3dVector(src)
-    low = np.array([0.283072, 0.130895, 0.449241]).reshape(1, 3)
-    # high = np.array([0.993248, 0.906157, 0.143936]).reshape(1, 3)
-    # low = np.array([0, 0, 0]).reshape(1, 3)
-    high = np.array([1.0, 0.0, 0.0]).reshape(1, 3)
+# def draw_mask(src, weights, image_name, save_dir, point_size=3):
+#     pcd1 = o3d.geometry.PointCloud()
+#     pcd1.points = o3d.utility.Vector3dVector(src)
+#     low = np.array([0.283072, 0.130895, 0.449241]).reshape(1, 3)
+#     # high = np.array([0.993248, 0.906157, 0.143936]).reshape(1, 3)
+#     # low = np.array([0, 0, 0]).reshape(1, 3)
+#     high = np.array([1.0, 0.0, 0.0]).reshape(1, 3)
+#
+#     t = np.repeat(weights.reshape(-1, 1), 3, 1)
+#     colors = low + t * (high - low)
+#     pcd1.colors = o3d.utility.Vector3dVector(colors)
+#     vis = o3d.visualization.Visualizer()
+#
+#     vis.create_window(width=1000, height=1000, left=50, top=50)
+#     vis.get_render_option().load_from_json("o3d_config/kitti.json")
+#     ctr = vis.get_view_control()
+#
+#     vis.add_geometry(pcd1, reset_bounding_box=True)
+#
+#     param = o3d.io.read_pinhole_camera_parameters("o3d_config/kitti_camera.json")
+#     ctr.convert_from_pinhole_camera_parameters(param)
+#     vis.get_view_control().convert_from_pinhole_camera_parameters(param)
+#
+#     # vis.poll_events()
+#     # vis.update_renderer()
+#     vis.run()
+#
+#     param = ctr.convert_to_pinhole_camera_parameters()
+#     o3d.io.write_pinhole_camera_parameters('o3d_config/kitti_camera.json', param)
+#     image = vis.capture_screen_float_buffer(False)
+#     plt.imsave(os.path.join(save_dir, image_name + ".png"), np.asarray(image), dpi=1)
+#     vis.destroy_window()
 
-    t = np.repeat(weights.reshape(-1, 1), 3, 1)
-    colors = low + t * (high - low)
-    pcd1.colors = o3d.utility.Vector3dVector(colors)
+def draw_origin_quant_sampled(pts, image_name, save_dir, point_size=3, view=False, estimate_normals=False):
+    pts = filter_ground(pts, thres=-2.5)
+
+    pcd1 = o3d.geometry.PointCloud()
+    pcd1.points = o3d.utility.Vector3dVector(pts)
+    if estimate_normals:
+        pcd1.estimate_normals()
+
     vis = o3d.visualization.Visualizer()
 
     vis.create_window(width=1000, height=1000, left=50, top=50)
     vis.get_render_option().load_from_json("o3d_config/kitti.json")
     ctr = vis.get_view_control()
+    # traj = o3d.io.read_pinhole_camera_trajectory("o3d_config/kitti_fov.json")
+    # print(traj.parameters)
 
     vis.add_geometry(pcd1, reset_bounding_box=True)
 
@@ -111,9 +159,11 @@ def draw_mask(src, weights, image_name, save_dir, point_size=3):
     ctr.convert_from_pinhole_camera_parameters(param)
     vis.get_view_control().convert_from_pinhole_camera_parameters(param)
 
-    # vis.poll_events()
-    # vis.update_renderer()
-    vis.run()
+    if view:
+        vis.run()
+    else:
+        vis.poll_events()
+        vis.update_renderer()
 
     param = ctr.convert_to_pinhole_camera_parameters()
     o3d.io.write_pinhole_camera_parameters('o3d_config/kitti_camera.json', param)
@@ -121,33 +171,42 @@ def draw_mask(src, weights, image_name, save_dir, point_size=3):
     plt.imsave(os.path.join(save_dir, image_name + ".png"), np.asarray(image), dpi=1)
     vis.destroy_window()
 
-
-def draw_correspondences(src, src_orig, tgt, tgt_orig, weights, attn, image_name, save_dir, point_size=3, k=256,
+def draw_correspondences(src, src_orig, tgt, tgt_orig, weights, corr_idx, image_name, save_dir, point_size=3, k=256,
                          view=False):
+    # weights = filter_weights_ground(src, weights)
+
+
+    src_orig = filter_ground(src_orig)
+    tgt_orig = filter_ground(tgt_orig)
+
     pcd1 = o3d.geometry.PointCloud()
     pcd1.points = o3d.utility.Vector3dVector(src)
-    pcd1.paint_uniform_color(np.array([255 / 255, 255 / 255, 30 / 255]).reshape(3, 1))  # yellow
+    # pcd1.paint_uniform_color(np.array([255 / 255, 255 / 255, 30 / 255]).reshape(3, 1))  # yellow
 
     pcd1_orig = o3d.geometry.PointCloud()
     pcd1_orig.points = o3d.utility.Vector3dVector(src_orig)
-    pcd1_orig.estimate_normals()
-    pcd1_orig.paint_uniform_color(np.array([255 / 255, 255 / 255, 30 / 255]).reshape(3, 1))  # yellow
+    # pcd1_orig.estimate_normals()
+    # pcd1_orig.paint_uniform_color(np.array([255 / 255, 255 / 255, 30 / 255]).reshape(3, 1))  # yellow
     # pcd1.paint_uniform_color(np.array([50 / 255, 205 / 255, 50 / 255]).reshape(3, 1))  # green
-    # pcd1.paint_uniform_color(np.array([230 / 255, 20 / 255, 50 / 255]).reshape(3, 1))  # red
+    # pcd1_orig.paint_uniform_color(np.array([230 / 255, 20 / 255, 50 / 255]).reshape(3, 1))  # red
+    pcd1_orig.paint_uniform_color(np.array([210 / 255, 60 / 255, 60 / 255]).reshape(3, 1))  # yellow
+    pcd1.paint_uniform_color(np.array([210 / 255, 60 / 255, 60 / 255]).reshape(3, 1))  # yellow
 
     pcd2 = o3d.geometry.PointCloud()
     # print(tgt.shape)
-    tgt += np.array([4, 0, 0]).reshape(1, 3)
-    tgt_orig += np.array([4, 0, 0]).reshape(1, 3)
+    tgt += np.array([0, 120, 0]).reshape(1, 3)
+    tgt_orig += np.array([0, 120, 0]).reshape(1, 3)
 
     pcd2.points = o3d.utility.Vector3dVector(tgt)
-    pcd2.paint_uniform_color(np.array([135 / 255, 206 / 255, 255 / 255]).reshape(3, 1))  # lightblue
+    # pcd2.paint_uniform_color(np.array([135 / 255, 206 / 255, 255 / 255]).reshape(3, 1))  # lightblue
 
     pcd2_orig = o3d.geometry.PointCloud()
     pcd2_orig.points = o3d.utility.Vector3dVector(tgt_orig)
-    pcd2_orig.estimate_normals()
-    pcd2_orig.paint_uniform_color(np.array([135 / 255, 206 / 255, 255 / 255]).reshape(3, 1))  # lightblue
-    # pcd2.paint_uniform_color(np.array([0 / 255, 0 / 255, 205 / 255]).reshape(3, 1))  # blue
+    # pcd2_orig.estimate_normals()
+    # pcd2_orig.paint_uniform_color(np.array([135 / 255, 206 / 255, 255 / 255]).reshape(3, 1))  # lightblue
+    # pcd2_orig.paint_uniform_color(np.array([0 / 255, 0 / 255, 205 / 255]).reshape(3, 1))  # blue
+    pcd2_orig.paint_uniform_color(np.array([61 / 255, 133 / 255, 198 / 255]).reshape(3, 1))
+    pcd2.paint_uniform_color(np.array([61 / 255, 133 / 255, 198 / 255]).reshape(3, 1))
     # vis = o3d.visualization.draw_geometries([pcd1, pcd2])
     # vis.capture_screen_image('test.png', True)
 
@@ -159,8 +218,8 @@ def draw_correspondences(src, src_orig, tgt, tgt_orig, weights, attn, image_name
 
     # vis.add_geometry(pcd1, reset_bounding_box=True)
 
-    idx = np.argmax(np.squeeze(attn), axis=1)
-    corr_idx = list(zip(range(src.shape[0]), idx))
+    corr_idx = corr_idx.squeeze()
+    corr_idx = list(zip(range(src.shape[0]), corr_idx))
     klargest = nlargest(k, enumerate(np.squeeze(weights)), itemgetter(1))
     klargest_idx = [i for i, v in klargest]
 
@@ -207,26 +266,38 @@ def draw_correspondences(src, src_orig, tgt, tgt_orig, weights, attn, image_name
 
 
 # scan0['src'].reshape()
-base_dir = "data/supp/kitti"
-save_dir = "images/kitti"
+base_dir = "data/iccv/kitti"
+# save_dir = "images/kitti/failed"
+# base_dir = "data/supp/kitti_failed_scans"
+save_dir = "images/iccv/kitti/failed"
 paths = os.listdir(base_dir)
-for path in paths:
-    head, tail = os.path.splitext(path)
-    scan = extract_data(os.path.join(base_dir, path))
-    src_true = (scan['Rtrue'] @ scan['src'].T).T + scan['Ttrue'].T
-    src_est_orig = (scan['Rest'] @ scan['src_orig'].T).T + scan['Test'].T
-    src_true_orig = (scan['Rtrue'] @ scan['src_orig'].T).T + scan['Ttrue'].T
-    draw_scans(scan['src_orig'], scan['tgt_orig'], image_name= head + "_init", save_dir=save_dir, point_size=3, view=False)
-    draw_scans(src_true_orig, scan['tgt_orig'], image_name=head + "_gt", point_size=3, save_dir=save_dir)
-    draw_scans(src_est_orig, scan['tgt_orig'], image_name=head + "_est", point_size=3, save_dir=save_dir)
 
-    # src_est = (scan['Rest'] @ scan['src'].T).T + scan['Test'].T
-    draw_correspondences(src_true, src_true_orig,
-                         scan['tgt'], scan['tgt_orig'],
-                         scan['w_src'], scan['log_attn_row'],
-                         image_name= head + "_corres", save_dir=save_dir,
-                         k=256, view=False)
+for path in paths:
+    if "failed" in path:
+        head, tail = os.path.splitext(path)
+        scan = extract_data(os.path.join(base_dir, path))
+        src_true = (scan['Rtrue'] @ scan['src'].T).T + scan['Ttrue'].T
+        src_est_orig = (scan['Rest'] @ scan['src_orig'].T).T + scan['Test'].T
+        src_true_orig = (scan['Rtrue'] @ scan['src_orig'].T).T + scan['Ttrue'].T
+
+        draw_scans(scan['src_orig'], scan['tgt_orig'], image_name= head + "_init", save_dir=save_dir, point_size=3, view=False)
+        draw_scans(src_true_orig, scan['tgt_orig'], image_name=head + "_gt", point_size=3, save_dir=save_dir, view=False)
+        draw_scans(src_est_orig, scan['tgt_orig'], image_name=head + "_est", point_size=3, save_dir=save_dir, view=False)
+        
+        draw_correspondences(src_true, src_true_orig,
+                            scan['tgt'], scan['tgt_orig'],
+                            scan['w_src'], scan['ind_corres_pts_for_src'],
+                            image_name= head + "_corres", save_dir=save_dir,
+                            k=256, view=False)
+
+    # draw_origin_quant_sampled(scan['src_orig'], image_name=head + "_orig",
+    #                           save_dir=save_dir, point_size=3, view=True, estimate_normals=False)
+    # draw_origin_quant_sampled(scan['src_quant'], image_name=head + "_quant",
+    #                           save_dir=save_dir, point_size=3, view=True)
+    # draw_origin_quant_sampled(scan['src'], image_name=head + "_sampled",
+    #                           save_dir=save_dir, point_size=3, view=True)
     # break
+
 
 # for i in range(5):
 #     name = "kitti_scans_{}".format(i)

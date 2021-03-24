@@ -46,29 +46,36 @@ methods = [
     #     "is_our": False,
     # },
     {
-        "name": "DGR",
-        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz',
+        "name": r"DGR + $\phi$",
+        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard_optim.npz',
+        "path_kitti": 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp_safeguard_optim.npz',
+        "is_our": False,
+    },    
+    {
+        "name": r"DGR + $\phi$ + Opt.",
+        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard.npz',
         "path_kitti": 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp.npz',
         "is_our": False,
     },
     {
-        "name": "DGR w/o safeguard",
-        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard.npz',
+        "name": r'DGR + $\phi$ + Opt. + Saf.',
+        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz',
         "path_kitti": '',
         "is_our": False,
     },
     {
-        "name": r"DGR$^\dagger$",
-        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard_optim.npz',
-        "path_kitti": 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp_safeguard_optim.npz',
-        "is_our": False,
-    },
-    {
-        "name": "Ours",
-        "path_3d": 'data/recall_curves_3dmatch_no_icp_245_None_1.npz',
-        "path_kitti": 'data/recall_curves_kitti/recall_curves_kitti_no_icp.npz',
+        "name": "PCAM-Soft",
+        "path_3d": '',
+        "path_kitti": 'data/recall_curves_PCAM_soft.npz',
         "is_our": True,
     },
+    {
+        "name": "PCAM-Sparse",
+        "path_3d": '',
+        "path_kitti": 'data/recall_curves_kitti_PCAM_sparse.npz',
+        "is_our": True,
+    },
+    
     # {
     #     "name": "Ours + ICP",
     #     "path_3d": '',
@@ -76,11 +83,23 @@ methods = [
     #     "is_our": True,
     # },
     {
-        "name": "Ours-5",
-        "path_3d": 'data/recall_curves_3dmatch_no_icp_245_None_5.npz',
+        "name": r'PCAM-Sparse + $\phi$',
+        "path_3d": 'data/recall_curves_3dmatch_PCAM_Sparse_Phi.npz',
         "path_kitti": '',
         "is_our": True,
     },
+    {
+        "name": r'PCAM-Sparse + $\phi$ + Opt.',
+        "path_3d": 'data/recall_curves_3dmatch_PCAM_Sparse_Phi_Optim.npz',
+        "path_kitti": '',
+        "is_our": True,
+    },
+    {
+        "name": r'PCAM-Sparse + $\phi$ + Opt. + Saf.',
+        "path_3d": 'data/recall_curves_3dmatch_PCAM_Sparse_Phi_Optim_Safeguard.npz',
+        "path_kitti": '',
+        "is_our": True,
+    }
 ]
 # cmap = plt.get_cmap('tab20b').colors
 # t = 2
@@ -92,7 +111,7 @@ methods = [
 
 cmap = plt.get_cmap('tab20').colors
 t = 1
-colors = [cmap[0], cmap[8], cmap[4], cmap[12], cmap[6]]
+colors = [cmap[0], cmap[8], cmap[4], cmap[12], cmap[6], cmap[11], cmap[2], cmap[7]]
 # colors = [cmap(i) for i in range(0, len(methods))]
 # colors.reverse()
 
@@ -128,14 +147,14 @@ def draw_curves(stats, ax1, ax2, rre_precisions, rte_precisions, name):
 
 kitti_rre_precisions=np.arange(0, 5, 0.05)
 kitti_rte_precisions=np.arange(0, 0.6, 0.005)
-threedmatch_rre_precisions=np.arange(0, 15, 0.05)
+threedmatch_rre_precisions=np.arange(0, 14, 0.05)
 threedmatch_rte_precisions=np.arange(0, 0.3, 0.005)
 
 fig = plt.figure(figsize=(20, 4))
-ax1 = fig.add_subplot(1, 4, 1, aspect=2.8 / np.max(kitti_rte_precisions))
-ax2 = fig.add_subplot(1, 4, 2, aspect=2.8 / np.max(kitti_rre_precisions))
-ax3 = fig.add_subplot(1, 4, 3, aspect=4.0 / np.max(threedmatch_rte_precisions))
-ax4 = fig.add_subplot(1, 4, 4, aspect=4.0 / np.max(threedmatch_rre_precisions))
+ax1 = fig.add_subplot(1, 4, 1, aspect=2.9 / np.max(kitti_rte_precisions))
+ax2 = fig.add_subplot(1, 4, 2, aspect=2.9 / np.max(kitti_rre_precisions))
+ax3 = fig.add_subplot(1, 4, 3, aspect=4.1 / np.max(threedmatch_rte_precisions))
+ax4 = fig.add_subplot(1, 4, 4, aspect=4.1 / np.max(threedmatch_rre_precisions))
 
 lines = []
 labels = []

@@ -7,10 +7,10 @@ stats = np.empty((0, 555, 5))
 # DGR
 DGR_data = [
     # ('DGR w/o safeguard, w/o optim', 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp_safeguard_optim.npz'),
-    (r"DGR$^\dagger$", 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp_safeguard_optim.npz'),
-    ('DGR', 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp.npz'),
+    (r"DGR + $\phi$", 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp_safeguard_optim.npz'),
+    (r"DGR + $\phi$ + Opt.", 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp.npz'),
     # ('DGR w/o safeguard', 'data/dgr_results_for_cvpr/dgr_kitti_original_wo_icp_safeguard.npz'),
-    ('DGR + ICP', 'data/dgr_results_for_cvpr/dgr_kitti_with_icp.npz'),
+    #('DGR + ICP', 'data/dgr_results_for_cvpr/dgr_kitti_with_icp.npz'),
 ]
 
 
@@ -22,8 +22,8 @@ for name, path in DGR_data:
 
 # Our method
 our_methods_data = [
-    ('Ours', 'data/recall_curves_kitti/recall_curves_kitti_no_icp.npz'),
-    ('Ours + ICP', 'data/recall_curves_kitti/recall_curves_kitti_icp.npz'),
+    ('PCAM-Sparse', 'data/recall_curves_kitti_PCAM_sparse.npz'),
+    ('PCAM-Soft', 'data/recall_curves_PCAM_soft.npz'),
 ]
 
 for name, path in our_methods_data:
@@ -44,7 +44,7 @@ colors = [cmap(i) for i in np.linspace(0, 1, len(method_names))]
 colors.reverse()
 plot_precision_recall_curves(stats,
                              method_names,
-                             rre_precisions=np.arange(0, 5, 0.05),
+                             rre_precisions=np.arange(0, 4.9, 0.05),
                              rte_precisions=np.arange(0, 0.6, 0.005),
                              output_postfix='kitti',
                              cmap=colors)

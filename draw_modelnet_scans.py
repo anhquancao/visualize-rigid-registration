@@ -30,7 +30,7 @@ def extract_data(path):
         'Ttrue': scan['Ttrue'],
         'w_src': scan['w_src'],
         'corres_pts_for_src': scan['corres_pts_for_src'],
-        'log_attn_row': scan['log_attn_row']
+        'ind_corres_pts_for_src': scan['ind_corres_pts_for_src'],        
     }
 
 
@@ -113,7 +113,7 @@ def draw_mask(src, weights, image_name, save_dir, point_size=3):
     vis.destroy_window()
 
 
-def draw_correspondences(src, tgt, weights, attn, image_name, save_dir, point_size=3, k=256,
+def draw_correspondences(src, tgt, weights, corr_idx, image_name, save_dir, point_size=3, k=256,
                          view=False):
     pcd1 = o3d.geometry.PointCloud()
     pcd1.points = o3d.utility.Vector3dVector(src)
@@ -139,8 +139,8 @@ def draw_correspondences(src, tgt, weights, attn, image_name, save_dir, point_si
 
     vis.add_geometry(pcd1, reset_bounding_box=True)
 
-    idx = np.argmax(np.squeeze(attn), axis=1)
-    corr_idx = list(zip(range(src.shape[0]), idx))
+    corr_idx = corr_idx.squeeze()
+    corr_idx = list(zip(range(src.shape[0]), corr_idx))
     klargest = nlargest(k, enumerate(np.squeeze(weights)), itemgetter(1))
     klargest_idx = [i for i, v in klargest]
 
@@ -184,8 +184,8 @@ def draw_correspondences(src, tgt, weights, attn, image_name, save_dir, point_si
 
 
 # scan0['src'].reshape()
-base_dir = "data/supp/modelnet"
-save_dir = "images/modelnet"
+base_dir = "data/iccv/modelnet"
+save_dir = "images/iccv/modelnet"
 paths = os.listdir(base_dir)
 for path in paths:
     head, tail = os.path.splitext(path)
@@ -199,7 +199,7 @@ for path in paths:
     # break
     # src_est = (scan['Rest'] @ scan['src'].T).T + scan['Test'].T
     draw_correspondences(src_true, scan['tgt'],
-                         scan['w_src'], scan['log_attn_row'],
+                         scan['w_src'], scan['ind_corres_pts_for_src'],
                          image_name= head + "_corres", save_dir=save_dir,
                          k=128, view=True)
     # break

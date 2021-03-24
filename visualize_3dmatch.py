@@ -11,9 +11,9 @@ stats = stats[selected_method_ids]
 
 # DGR
 DGR_rerun_names = [
-    ('DGR', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz'),
-    ('DGR w/o safeguard', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard.npz'),
-    (r"DGR$^\dagger$", 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard_optim.npz')
+    (r"DGR + $\phi$" , 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard_optim.npz'),
+    (r'DGR + $\phi$ + Opt.', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard.npz'),
+    (r'DGR + $\phi$ + Opt. + Saf.', 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz'),
 ]
 for name, path in DGR_rerun_names:
     method_names.append(name)
@@ -23,7 +23,10 @@ for name, path in DGR_rerun_names:
 # Our method
 our_methods_data = [
     # ('Ours', 'data/recall_curves_3dmatch_no_icp_245_None_3/results.npy'),
-    ('Ours', 'data/recall_curves_3dmatch_no_icp_245_None_5.npz'),
+    # ('Ours', 'data/recall_curves_3dmatch_no_icp_245_None_5.npz'),
+    (r'PCAM-Sparse + $\phi$', 'data/recall_curves_3dmatch_PCAM_Sparse_Phi.npz'),
+    (r'PCAM-Sparse + $\phi$ + Opt.', 'data/recall_curves_3dmatch_PCAM_Sparse_Phi_Optim.npz'),
+    (r'PCAM-Sparse + $\phi$ + Opt. + Saf.', 'data/recall_curves_3dmatch_PCAM_Sparse_Phi_Optim_Safeguard.npz'),
 ]
 
 for name, path in our_methods_data:
@@ -39,7 +42,7 @@ colors = [cmap(i) for i in np.linspace(0, 1, len(method_names))]
 colors.reverse()
 plot_precision_recall_curves(stats,
                              method_names,
-                             rre_precisions=np.arange(0, 15, 0.05),
+                             rre_precisions=np.arange(0, 14, 0.05),
                              rte_precisions=np.arange(0, 0.3, 0.005),
                              output_postfix='3dmatch',
                              cmap=colors, figsize=(9, 3.3), aspect=4.2, title="3DMatch")

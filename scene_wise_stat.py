@@ -6,31 +6,43 @@ plt.rcParams.update({'font.size': 15})
 ours_1_data = np.load("data/scene_stats/recall_curves_3dmatch_no_icp_245_None_1_with_scene_id.npz")['results']
 d = np.load("data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz")
 methods = [
+    # {
+    #     "name": "DGR",
+    #     "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz',
+    #     "is_our": False,
+    # },
     {
-        "name": "DGR",
-        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz',
-        "is_our": False,
-    },
-    {
-        "name": "DGR w/o safeguard",
-        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard.npz',
-        "is_our": False,
-    },
-    {
-        "name": r"DGR$^\dagger$",
+        "name": r"DGR + $\phi$",
         "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard_optim.npz',
         "is_our": False,
     },
     {
-        "name": "Ours-1",
-        "path_3d": 'data/scene_stats/recall_curves_3dmatch_no_icp_245_None_1_with_scene_id.npz',
+        "name": r'DGR + $\phi$ + Opt.',
+        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp_safeguard.npz',
+        "is_our": False,
+    },
+    {
+        "name": r'DGR + $\phi$ + Opt. + Saf.',
+        "path_3d": 'data/dgr_results_for_cvpr/dgr_3dmatch_original_wo_icp.npz',
+        "is_our": False,
+    },
+
+    {
+        "name": r'PCAM-Sparse + $\phi$',
+        "path_3d": 'data/recall_curves_3dmatch_PCAM_Sparse_Phi.npz',
         "is_our": True,
     },
     {
-        "name": "Ours-5",
-        "path_3d": 'data/scene_stats/recall_curves_3dmatch_no_icp_245_None_5_with_scene_id.npz',
+        "name": r'PCAM-Sparse + $\phi$ + Opt.',
+        "path_3d": 'data/recall_curves_3dmatch_PCAM_Sparse_Phi_Optim.npz',
         "is_our": True,
     },
+    {
+        "name": r'PCAM-Sparse + $\phi$ + Opt. + Saf.',
+        "path_3d": 'data/recall_curves_3dmatch_PCAM_Sparse_Phi_Optim_Safeguard.npz',
+        "is_our": True,
+    },
+
 ]
 
 scene_names = [
@@ -41,17 +53,20 @@ method_names = []
 for method in methods:
     if method['is_our']:
         g = np.load(method['path_3d'])
+        # print(g['results'].reshape(-1, 1623, 5).shape)
         stats = g['results'].reshape(-1, 1623, 5).mean(0, keepdims=False)
     else:
         f = np.load(method['path_3d'])
         stats = np.squeeze(f['stats'])
+    # print(method['name']) 
+    # print(stats.mean(0))
     list_stats.append(stats[np.newaxis,])
     method_names.append(method['name'])
 
 stats = np.concatenate(list_stats, axis=0)
 
 cmap = plt.get_cmap('tab20').colors
-colors = [cmap[0], cmap[8], cmap[4], cmap[12], cmap[6]]
+colors = [cmap[0], cmap[8], cmap[4], cmap[12], cmap[6], cmap[2]]
 scene_wise_stats = analyze_by_scene(stats,
                                     range(len(scene_names)),
                                     rte_thresh=0.3,

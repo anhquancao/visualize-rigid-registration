@@ -1,10 +1,12 @@
 import numpy as np
+from numpy.core.fromnumeric import squeeze
 import open3d as o3d
 import matplotlib.pyplot as plt
 from operator import itemgetter
 from heapq import nlargest
 import os
 import ntpath
+import pickle
 
 
 # green_colors = np.repeat()
@@ -12,40 +14,9 @@ import ntpath
 
 
 def extract_data(path):
-    scan = np.load(path)
-    print(list(scan.keys()))
-    # ['src', 'tgt', 'src_quant', 'tgt_quant', 'src_orig', 'tgt_orig', 'Rtrue', 'Ttrue', 'Rest', 'Test', 'corres_pts_for_src', 'log_attn_row', 'w_src', 'filename']
-    # print(scan['src_orig'].shape)
-    src = np.squeeze(scan['src']).T
-    tgt = np.squeeze(scan['tgt']).T
-    src_quant = np.squeeze(scan['src_quant'])
-    tgt_quant = np.squeeze(scan['tgt_quant'])
-    src_orig = np.squeeze(scan['src_orig'])
-    tgt_orig = np.squeeze(scan['tgt_orig'])
-
-    R_est = np.squeeze(scan['Rest'])
-    T_est = np.squeeze(scan['Test'], 0)
-    R_true = np.squeeze(scan['Rtrue'])
-    T_true = np.squeeze(scan['Ttrue'], 0)
-
-    return {
-        'src_orig': src_orig,
-        'tgt_orig': tgt_orig,
-        'src': src,
-        'tgt': tgt,
-        'src_quant': src_quant,
-        'tgt_quant': tgt_quant,
-        'Rest': R_est,
-        'Test': T_est,
-        'Rtrue': R_true,
-        'Ttrue': T_true,
-        'w_src': scan['w_src'],
-        'src_mean': scan['src_mean'],
-        'tgt_mean': scan['tgt_mean'],
-        'ind_corres_pts_for_src': scan['ind_corres_pts_for_src'],
-        'corres_pts_for_src': scan['corres_pts_for_src'],
-        # 'log_attn_row': scan['log_attn_row']
-    }
+    with open(path, "rb") as input_file:
+        e = pickle.load(input_file)
+    return e
 
 
 def draw_scans(src, tgt, image_name, save_dir, point_size=3, view=False):
@@ -169,7 +140,7 @@ def draw_mask(src, weights, image_name, save_dir, point_size=3):
     vis.destroy_window()
 
 
-def draw_correspondences(src, src_orig, tgt, tgt_orig, weights, corr_idx, image_name, save_dir, point_size=3, k=256,
+def draw_correspondences(src, src_orig, tgt, tgt_orig, weights, attn, image_name, save_dir, point_size=3, k=256,
                          view=False):
     pcd1 = o3d.geometry.PointCloud()
     pcd1.points = o3d.utility.Vector3dVector(src)
@@ -206,10 +177,8 @@ def draw_correspondences(src, src_orig, tgt, tgt_orig, weights, corr_idx, image_
 
     # vis.add_geometry(pcd1, reset_bounding_box=True)
 
-    # idx = np.argmax(np.squeeze(attn), axis=1)
-    corr_idx = corr_idx.squeeze()
-    corr_idx = list(zip(range(src.shape[0]), corr_idx))
-    # print(corr_idx.shape)
+    idx = np.argmax(np.squeeze(attn), axis=1)
+    corr_idx = list(zip(range(src.shape[0]), idx))
     klargest = nlargest(k, enumerate(np.squeeze(weights)), itemgetter(1))
     klargest_idx = [i for i, v in klargest]
 
@@ -256,34 +225,37 @@ def draw_correspondences(src, src_orig, tgt, tgt_orig, weights, corr_idx, image_
 
 
 # scan0['src'].reshape()
-base_dir = "data/iccv/3dmatch"
-save_dir = "images/iccv/3dmatch/failed"
+base_dir = "data/multi_attns"
+save_dir = "images/multi_attns"
 paths = os.listdir(base_dir)
 for path in paths:
-    if "failed" in path:
-        print(path)
-        head, tail = os.path.splitext(path)
-        scan = extract_data(os.path.join(base_dir, path))
-        src_mean = scan['src_mean'].reshape(1, 3)
-        tgt_mean = scan['tgt_mean'].reshape(1, 3)
-        scan['src'] += src_mean
-        scan['src_orig'] += src_mean
-        scan['tgt'] += tgt_mean
-        scan['tgt_orig'] += tgt_mean
-        src_true = (scan['Rtrue'] @ scan['src'].T).T + scan['Ttrue'].T
-        src_est_orig = (scan['Rest'] @ scan['src_orig'].T).T + scan['Test'].T
-        src_true_orig = (scan['Rtrue'] @ scan['src_orig'].T).T + scan['Ttrue'].T
-        # print(scan['Rest'], scan['Rtrue'])
-        draw_scans(src_true_orig, scan['tgt_orig'], image_name=head + "_gt", point_size=3, save_dir=save_dir, view=True)
-        draw_scans(scan['src_orig'], scan['tgt_orig'], image_name= head + "_init", save_dir=save_dir, point_size=3, view=True)        
-        draw_scans(src_est_orig, scan['tgt_orig'], image_name=head + "_est", point_size=3, save_dir=save_dir, view=True)
+    # head, tail = os.path.splitext(path)
+    scan = extract_data(os.path.join(base_dir, path))
+    src = scan['src'].squeeze()
+    n_points = src.shape[1]
+    tgt = scan['tgt'].squeeze()
+    est_trans = scan['est_trans'].squeeze()
+    R_est = est_trans[:3, :3]
+    t_est = est_trans[:3, 3].reshape(3, 1)
+    src_est = R_est @ src + t_est 
+    gt_trans = scan['gt_trans']
+    log_attn_rows = [t.squeeze() for t in scan['log_attn_rows']]
+    log_attn_cols = [t.squeeze() for t in scan['log_attn_cols']]
+    print(src.shape, est_trans.shape, gt_trans.shape)
+    print(len(log_attn_rows), log_attn_rows[0].shape)
+    # src_true = (scan['Rtrue'] @ scan['src'].T).T + scan['Ttrue'].T
+    # src_est_orig = (scan['Rest'] @ scan['src_orig'].T).T + scan['Test'].T
+    # src_true_orig = (scan['Rtrue'] @ scan['src_orig'].T).T + scan['Ttrue'].T
+    # draw_scans(scan['src_orig'], scan['tgt_orig'], image_name= head + "_init", save_dir=save_dir, point_size=3, view=False)
+    # draw_scans(src_true_orig, scan['tgt_orig'], image_name=head + "_gt", point_size=3, save_dir=save_dir)
+    # draw_scans(src_est_orig, scan['tgt_orig'], image_name=head + "_est", point_size=3, save_dir=save_dir)
 
-
-        draw_correspondences(src_true, src_true_orig,
-                            scan['tgt'], scan['tgt_orig'],
-                            scan['w_src'], scan['ind_corres_pts_for_src'],
-                            image_name= head + "_corres", save_dir=save_dir,
-                            k=256, view=True)
+    w = np.ones(n_points)/n_points
+    draw_correspondences(src_est.T, src_est.T,
+                          tgt.T, tgt.T,
+                          w, log_attn_rows[0],
+                          image_name=  "attn_{}".format(0), save_dir=save_dir,
+                          k=500, view=True)
 
     # draw_origin_quant_sampled(scan['src_orig'], scan['src_quant'], scan['src'], image_name=head + "_quant", save_dir=save_dir, point_size=3, view=True)
     # break
